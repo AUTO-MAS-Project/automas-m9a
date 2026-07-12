@@ -36,7 +36,7 @@ jobs:
     name: Publish automas-m9a
     if: inputs.package == 'automas-m9a'
     runs-on: ubuntu-latest
-    environment: pypi-meta
+    environment: pypi-m9a
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
