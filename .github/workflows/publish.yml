@@ -1,0 +1,49 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish
+        required: true
+        type: choice
+        options:
+          - automas-script-maafw-pack-m9a
+          - automas-m9a
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-pack-m9a:
+    name: Publish automas-script-maafw-pack-m9a
+    if: inputs.package == 'automas-script-maafw-pack-m9a'
+    runs-on: ubuntu-latest
+    environment: pypi-pack-m9a
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade build
+      - run: python -m build packages/automas_script_maafw_pack_m9a --outdir dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+
+  publish-meta:
+    name: Publish automas-m9a
+    if: inputs.package == 'automas-m9a'
+    runs-on: ubuntu-latest
+    environment: pypi-meta
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade build
+      - run: python -m build packages/automas_m9a --outdir dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
