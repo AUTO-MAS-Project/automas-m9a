@@ -31,10 +31,9 @@ async def migrate_legacy_m9a_config(legacy_script: Any, provider: Any) -> Any:
     script_payload = _build_script_payload(raw_script, interface, controller_name)
     script_payload["SubConfigsInfo"] = {
         "UserData": await _build_user_collection(
-            legacy_script,
-            provider.user_config_class,
-            interface,
-            controller_name,
+            legacy_script=legacy_script,
+            user_config_class=provider.user_config_class,
+            interface=interface,
         )
     }
 
@@ -90,7 +89,6 @@ async def _build_user_collection(
     legacy_script: Any,
     user_config_class: type,
     interface: MaaFWInterface,
-    controller_name: str,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {"instances": []}
     for uid, old_user in legacy_script.UserData.items():
@@ -99,9 +97,8 @@ async def _build_user_collection(
             {"uid": str(uid), "type": user_config_class.__name__}
         )
         result[str(uid)] = _build_user_payload(
-            raw_user,
-            interface,
-            controller_name,
+            raw_user=raw_user,
+            interface=interface,
         )
     return result
 
@@ -109,7 +106,6 @@ async def _build_user_collection(
 def _build_user_payload(
     raw_user: dict[str, Any],
     interface: MaaFWInterface,
-    controller_name: str,
 ) -> dict[str, Any]:
     task_snapshot = _build_task_snapshot(
         _load_json(_nested(raw_user, "Task", "Queue"), list),
@@ -138,11 +134,6 @@ def _build_user_payload(
             ),
         },
     }
-    resource_name = _match_resource_name(
-        interface,
-        str(_nested(raw_user, "Info", "Resource") or ""),
-        controller_name,
-    )
     payload = {
         "Info": {
             **_copy_group(
@@ -160,8 +151,6 @@ def _build_user_payload(
                     "Account",
                 ),
             ),
-            "Controller": controller_name,
-            "Resource": resource_name,
         },
         "Task": {
             "SelectedPreset": "",
@@ -333,33 +322,6 @@ def _default_adb_controller(interface: MaaFWInterface) -> str:
         None,
     )
     return controller.name if controller is not None else ""
-
-
-def _match_resource_name(
-    interface: MaaFWInterface,
-    legacy_value: str,
-    controller_name: str,
-) -> str:
-    if legacy_value:
-        resource = next(
-            (
-                item
-                for item in interface.resource
-                if legacy_value in {item.name, item.label}
-            ),
-            None,
-        )
-        if resource is not None:
-            return resource.name
-    resource = next(
-        (
-            item
-            for item in interface.resource
-            if not item.controller or controller_name in item.controller
-        ),
-        None,
-    )
-    return resource.name if resource is not None else ""
 
 
 def _copy_group(
